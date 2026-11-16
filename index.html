@@ -697,175 +697,67 @@ h1 {
     </footer>
   </div>
 
-  <script>
-    (() => {
-      "use strict";
+ <script>
+  (() => {
+    "use strict";
 
-      // index.html과 PDF를 같은 폴더에 두세요.
-      const PDF_PATH = "./UNIONE_Company_Profile.pdf";
-      const pdfURL = new URL(PDF_PATH, document.baseURI);
+    // 실제 업로드한 PDF 파일명과 일치해야 합니다.
+    const PDF_PATH = "./UNIONE_Company_Profile.pdf";
+    const pdfURL = new URL(PDF_PATH, document.baseURI);
 
-      const links = [...document.querySelectorAll("[data-pdf-link]")];
-      const toggle = document.getElementById("preview-toggle");
-      const preview = document.getElementById("pdf-preview");
-      const frame = document.getElementById("pdf-frame");
-      const status = document.getElementById("file-status");
-      const message = document.getElementById("status-message");
-      const retry = document.getElementById("retry-button");
+    const links = document.querySelectorAll("[data-pdf-link]");
+    const toggle = document.getElementById("preview-toggle");
+    const preview = document.getElementById("pdf-preview");
+    const frame = document.getElementById("pdf-frame");
+    const status = document.getElementById("file-status");
 
-      let unavailable = false;
-      let checking = false;
+    // 자동 파일 확인 안내 숨기기
+    if (status) {
+      status.hidden = true;
+    }
 
-      links.forEach(link => {
-        link.href = pdfURL.href;
+    // 별도의 확인 요청 없이 실제 PDF에 바로 연결
+    links.forEach(link => {
+      link.href = pdfURL.href;
+      link.removeAttribute("aria-disabled");
 
-        link.addEventListener("click", event => {
-          if (unavailable) event.preventDefault();
+      if (link.hasAttribute("download")) {
+        link.setAttribute("download", "UNIONE_Company_Profile.pdf");
+      }
+    });
+
+    if (!toggle || !preview || !frame) return;
+
+    toggle.hidden = false;
+    toggle.disabled = false;
+    toggle.setAttribute("aria-expanded", "false");
+
+    preview.hidden = true;
+    frame.removeAttribute("src");
+
+    toggle.addEventListener("click", () => {
+      const opening = preview.hidden;
+
+      preview.hidden = !opening;
+      toggle.setAttribute("aria-expanded", String(opening));
+      toggle.textContent = opening
+        ? "미리보기 닫기 ×"
+        : "PDF 미리보기 ↗";
+
+      if (opening) {
+        if (!frame.hasAttribute("src")) {
+          frame.src = pdfURL.href;
+        }
+
+        preview.scrollIntoView({
+          behavior: window.matchMedia(
+            "(prefers-reduced-motion: reduce)"
+          ).matches ? "auto" : "smooth",
+          block: "start"
         });
-      });
-
-      function setUnavailable(value) {
-        unavailable = value;
-        toggle.disabled = value;
-
-        links.forEach(link => {
-          if (value) {
-            link.setAttribute("aria-disabled", "true");
-            link.removeAttribute("href");
-          } else {
-            link.removeAttribute("aria-disabled");
-            link.href = pdfURL.href;
-          }
-        });
-
-        if (value) {
-          preview.hidden = true;
-          frame.removeAttribute("src");
-          toggle.setAttribute("aria-expanded", "false");
-          toggle.textContent = "PDF 미리보기 ↗";
-        }
       }
-
-      function showStatus(text, allowRetry = false) {
-        status.hidden = false;
-        message.textContent = text;
-        retry.hidden = !allowRetry;
-      }
-
-      async function checkPDF() {
-        if (checking) return;
-        checking = true;
-        retry.disabled = true;
-
-        showStatus("회사소개서 파일을 확인하고 있습니다.");
-
-        // 로컬 파일을 직접 열었을 때는 서버의 파일 존재 여부를 확인할 수 없습니다.
-        if (location.protocol === "file:") {
-  setUnavailable(false);
-  status.hidden = true;
-  message.textContent = "";
-  checking = false;
-  retry.disabled = false;
-  return;
-}
-
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 10000);
-
-        try {
-          let response = await fetch(pdfURL.href, {
-            method: "HEAD",
-            cache: "no-store",
-            signal: controller.signal
-          });
-
-          // HEAD를 지원하지 않는 서버를 위한 보완 처리입니다.
-          if (response.status === 405 || response.status === 501) {
-            response = await fetch(pdfURL.href, {
-              method: "GET",
-              headers: { Range: "bytes=0-4" },
-              cache: "no-store",
-              signal: controller.signal
-            });
-
-            // 서버가 Range를 무시해도 전체 PDF를 검사 목적으로 받지 않습니다.
-            if (response.body) {
-              await response.body.cancel();
-            }
-          }
-
-          if (response.status === 404 || response.status === 410) {
-            setUnavailable(true);
-            showStatus(
-              "회사소개서가 아직 등록되지 않았습니다. " +
-              "부스 담당자에게 문의하거나 잠시 후 다시 확인해 주세요.",
-              true
-            );
-            return;
-          }
-
-          if (!response.ok) {
-            throw new Error("파일 확인 응답 오류");
-          }
-
-          // PDF 경로에 오류 페이지가 반환되는 경우도 안내합니다.
-          const contentType =
-            (response.headers.get("content-type") || "").toLowerCase();
-
-          if (contentType.includes("text/html")) {
-            setUnavailable(true);
-            showStatus(
-              "회사소개서 파일을 찾을 수 없습니다. " +
-              "부스 담당자에게 문의해 주세요.",
-              true
-            );
-            return;
-          }
-
-          setUnavailable(false);
-          showStatus("회사소개서가 준비되었습니다. 미리보기 또는 다운로드를 선택하세요.");
-        } catch (error) {
-          // 통신 장애를 파일 부재로 단정하지 않고 직접 링크를 유지합니다.
-          setUnavailable(false);
-          showStatus(
-            "네트워크 문제로 파일 상태를 확인하지 못했습니다. " +
-            "다운로드 또는 새 탭에서 열기를 시도하거나 다시 확인해 주세요.",
-            true
-          );
-        } finally {
-          clearTimeout(timer);
-          checking = false;
-          retry.disabled = false;
-        }
-      }
-
-      toggle.hidden = false;
-
-      toggle.addEventListener("click", () => {
-        if (unavailable) return;
-
-        const opening = preview.hidden;
-        preview.hidden = !opening;
-        toggle.setAttribute("aria-expanded", String(opening));
-        toggle.textContent = opening ? "미리보기 닫기 ×" : "PDF 미리보기 ↗";
-
-        if (opening) {
-          if (!frame.hasAttribute("src")) {
-            frame.src = pdfURL.href;
-          }
-
-          preview.scrollIntoView({
-            behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-              ? "instant"
-              : "smooth",
-            block: "start"
-          });
-        }
-      });
-
-      retry.addEventListener("click", checkPDF);
-      checkPDF();
-    })();
-  </script>
+    });
+  })();
+</script>
 </body>
 </html>
