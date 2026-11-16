@@ -353,32 +353,62 @@
   </div>
 
   <script>
-    (() => {
-      "use strict";
+  (() => {
+    "use strict";
 
-      const button = document.getElementById("preview-button");
-      const preview = document.getElementById("preview");
-      const frame = document.getElementById("pdf-frame");
+    const button = document.getElementById("preview-button");
+    const preview = document.getElementById("preview");
+    const frame = document.getElementById("pdf-frame");
+    const pdfPath = "./UNIONE_Company_Profile.pdf";
 
-      button.hidden = false;
+    // 작은 화면 또는 터치 중심 기기는 브라우저의 PDF 뷰어 사용
+    const mobile = window.matchMedia(
+      "(max-width: 768px), (hover: none) and (pointer: coarse)"
+    );
 
-      button.addEventListener("click", () => {
-        const opening = preview.hidden;
+    button.hidden = false;
 
-        preview.hidden = !opening;
-        button.setAttribute("aria-expanded", String(opening));
-        button.textContent = opening
-          ? "미리보기 닫기 ×"
-          : "PDF 미리보기 ↗";
+    function updateButton() {
+      if (mobile.matches) {
+        preview.hidden = true;
+        button.textContent = "PDF 미리보기 (새 탭) ↗";
+        button.removeAttribute("aria-expanded");
+        button.removeAttribute("aria-controls");
+      } else {
+        button.textContent = preview.hidden
+          ? "PDF 미리보기 ↗"
+          : "미리보기 닫기 ×";
+        button.setAttribute("aria-expanded", String(!preview.hidden));
+        button.setAttribute("aria-controls", "preview");
+      }
+    }
 
-        if (opening) {
-          if (!frame.hasAttribute("src")) {
-            frame.src = "./UNIONE_Company_Profile.pdf";
-          }
-          preview.scrollIntoView({ behavior: "auto", block: "start" });
+    button.addEventListener("click", () => {
+      if (mobile.matches) {
+        window.open(pdfPath, "_blank", "noopener,noreferrer");
+        return;
+      }
+
+      const opening = preview.hidden;
+      preview.hidden = !opening;
+
+      if (opening) {
+        if (!frame.hasAttribute("src")) {
+          frame.src = pdfPath;
         }
-      });
-    })();
-  </script>
+
+        preview.scrollIntoView({
+          behavior: "auto",
+          block: "start"
+        });
+      }
+
+      updateButton();
+    });
+
+    mobile.addEventListener("change", updateButton);
+    updateButton();
+  })();
+</script>
 </body>
 </html>
