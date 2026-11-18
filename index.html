@@ -237,7 +237,43 @@
       color: #53627a;
       font-size: 12px;
     }
+/* Instagram */
+.social-section {
+  margin-top: 48px;
+  padding: 32px 20px;
+  text-align: center;
+  border: 1px solid #d8e2f0;
+  border-radius: 16px;
+  background: #fff;
+}
 
+.social-section p {
+  margin: 0 0 16px;
+  color: #53627a;
+  font-size: 14px;
+}
+
+.instagram-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 12px 28px;
+  border: 1px solid #10264d;
+  border-radius: 8px;
+  color: #10264d;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background .2s, color .2s;
+}
+
+.instagram-btn:hover {
+  background: #10264d;
+  color: #fff;
+}
     @media (max-width: 720px) {
       .hero { padding-top: 48px; }
       .card { grid-template-columns: 1fr; padding: 28px; gap: 20px; }
@@ -346,7 +382,30 @@
         </iframe>
       </section>
     </main>
+      </section>
 
+      <!-- Instagram -->
+      <section class="social-section"
+               aria-label="유니원 공식 인스타그램">
+
+        <p>유니원의 다양한 소식을 만나보세요.</p>
+
+        <a class="instagram-btn"
+           href="https://www.instagram.com/계정명/"
+           target="_blank"
+           rel="noopener noreferrer"
+           aria-label="유니원 공식 인스타그램 (새 탭)">
+
+          Instagram 바로가기 ↗
+
+        </a>
+      </section>
+
+    </main>
+
+    <footer>
+      © UNIONE COMMUNICATIONS · KME2026
+    </footer>
     <footer>
       © UNIONE COMMUNICATIONS · KME2026
     </footer>
